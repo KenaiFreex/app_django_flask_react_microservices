@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+    # ----------- DJANGO CONTAINERS: Backend, queue and database ---------------
+    django_backend:
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
+        container_name: django_backend
+        image: xavierperez21/django_microservices_dou:latest
+        command: 'python manage.py runserver 0.0.0.0:8000'
+        ports:
+            - 8000:8000
+        volumes: 
+            - ./admin:/app
+        depends_on:
+            - django_db
+    
+    django_queue:
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
+        container_name: django_queue
+        image: xavierperez21/django_microservices_dou:latest
+        command: 'python consumer.py'
+        depends_on:
+            - django_db
+    
+    django_db:
+        container_name: django_db
+        image: mysql:5.7.22
+        restart: always
+        environment:
+            MYSQL_DATABASE: admin
+            MYSQL_USER: root
+            MYSQL_PASSWORD: root
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - ./admin/.dbdata:/var/lib/mysql
+        ports:
+            - 33066:3306
+    
+
+    # ----------- FLASK CONTAINERS: Backend, queue and database ---------------
+    flask_backend:
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
+        container_name: flask_backend
+        image: xavierperez21/flask_microservices_dou:latest
+        command: 'python main.py'
+        ports:
+            - 8001:5000
+        volumes: 
+            - ./main:/app
+        depends_on:
+            - flask_db
+    
+    flask_queue:
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
+        container_name: flask_queue
+        image: xavierperez21/flask_microservices_dou:latest
+        command: 'python consumer.py'
+        depends_on:
+            - flask_db
+
+    flask_db:
+        container_name: flask_db
+        image: mysql:5.7.22
+        restart: always
+        environment:
+            MYSQL_DATABASE: main
+            MYSQL_USER: root
+            MYSQL_PASSWORD: root
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - ./main/.dbdata:/var/lib/mysql
+        ports:
+            - 33067:3306
+    
+
+    # ----------- REACT CONTAINER ---------------
+    react_crud:
+        container_name: react_crud
+        image: xavierperez21/node:react_crud
+        volumes:
+            - './react-crud:/app'
+            - '/app/node_modules'
+        ports:
+            - 3000:3000
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+        depends_on:
+            - flask_backend
+            - django_backend
