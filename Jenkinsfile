@@ -41,7 +41,7 @@ pipeline {
                     } */
                 }
             }
-        }
+        
         stage('Clean') {
             steps {
                 echo '=== Delete the local docker images ==='
@@ -50,4 +50,4 @@ pipeline {
             }
         }
     }
-}
+
